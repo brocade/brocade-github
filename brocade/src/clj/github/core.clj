@@ -23,7 +23,8 @@
 (defn get-repos
       "Return collection of repos based on user/org"
       [user]
-      (pmap #(select-keys % [:name :html_url :forks :description]) (repos/user-repos user {:oauth-token token}))
+      (pmap #(select-keys % [:name :html_url :forks :description])
+            (repos/user-repos user {:oauth-token token}))
       )
 
 
@@ -70,8 +71,8 @@
 
 (defn assemble-report
       [repo contribs commits]
-      (let [sites (assoc {} :github/repo repo)
-            contribs (assoc sites :contributors contribs)
+      (let [root (assoc {} :github/root {:repo repo})
+            contribs (assoc root :contributors contribs)
             report (assoc contribs :last-commit commits)]
            report
            )

@@ -18,19 +18,6 @@
 
 (def repo-uri "https://raw.githubusercontent.com/gaberger/brocade-github/master/brocade/resources/public/app/app.edn")
 
-(defn with-async-handler [ch opts]
-  (assoc opts :handler
-         (fn [res] (go (>! ch res)
-                       (close! ch)))))
-
-;(defn remote-get
-;  [uri & [opts]]
-;  (let [ch (chan 1)
-;        _ (print "in get")]
-;    (ajax/GET uri (with-async-handler ch opts))
-;    ch
-;    ))
-
 (defn async-get
   [url]
   (let [ch (chan)]
@@ -38,29 +25,8 @@
                          (put! ch resp))})
     ch))
 
-
-
-;(defn receiver [event]
-;  (let [response (.-target event)]
-;    (print (.getResponseText response))))
-
-(defn handler [chan response]
-    (let [c (chan)
-          cstr (str response)]
-      (go
-        (>! c cstr)
-    )))
-
-;(defn get-repo
-;  []
-; (GET "https://raw.githubusercontent.com/gaberger/brocade-github/master/brocade/resources/public/app/app.edn"
-;      {:response-format :transit
-;        :handler handler
-;       :keywords? true
-;       }))
-
-
 ;; Initialize Application State
+
 (def app-state
   (atom
     github.state/page-state
@@ -81,14 +47,13 @@
 
 (defmethod read :github/repo
            [{:keys [state] :as env} key params]
-          (go
-            (let [ch (async-get repo-uri)
-                  foo (<! ch)
-                  _ (print foo)]
-              {:value {:github/repo "Foo"}}
+  (go
+    (let [ch (async-get repo-uri)
+                     response (<! ch)]
+              (if response)
+                {:value {:github/repo (first response)}}
+                {:value :not-found}
               )))
-
-
 
 
 (defn header-template
