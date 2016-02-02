@@ -4,17 +4,67 @@
     [goog.dom :as gdom]
     [om.dom :as dom]
     [om.next :as om :refer-macros [defui]]
+    [ajax.core :refer [GET] :as ajax]
     [github.state]
+    [cljs.core.async :refer [put! chan <! >! close!]]
     )
-  )
+  (:require-macros [cljs.core.async.macros :refer [go]]))
 
 (enable-console-print!)
 
-;; Initialize Application State
+(declare git-cards)
+(declare footer-body)
+(declare footer-head)
 
+(def repo-uri "https://raw.githubusercontent.com/gaberger/brocade-github/master/brocade/resources/public/app/app.edn")
+
+(defn with-async-handler [ch opts]
+  (assoc opts :handler
+         (fn [res] (go (>! ch res)
+                       (close! ch)))))
+
+;(defn remote-get
+;  [uri & [opts]]
+;  (let [ch (chan 1)
+;        _ (print "in get")]
+;    (ajax/GET uri (with-async-handler ch opts))
+;    ch
+;    ))
+
+(defn async-get
+  [url]
+  (let [ch (chan)]
+    (GET url {:handler (fn [resp]
+                         (put! ch resp))})
+    ch))
+
+
+
+;(defn receiver [event]
+;  (let [response (.-target event)]
+;    (print (.getResponseText response))))
+
+(defn handler [chan response]
+    (let [c (chan)
+          cstr (str response)]
+      (go
+        (>! c cstr)
+    )))
+
+;(defn get-repo
+;  []
+; (GET "https://raw.githubusercontent.com/gaberger/brocade-github/master/brocade/resources/public/app/app.edn"
+;      {:response-format :transit
+;        :handler handler
+;       :keywords? true
+;       }))
+
+
+;; Initialize Application State
 (def app-state
   (atom
-    github.state/page-state))
+    github.state/page-state
+    ))
 
 (defmulti read (fn [env key params] key))
 
@@ -26,17 +76,19 @@
                         {:value :not-found})))
 
 (defmethod read :app/footer
-           [{:keys [state] :as env} key {:keys [start end]}]
-           {:value (subvec (:app/footer @state) start end)})
+           [{:keys [state] :as env} key params]
+           {:value (:app/footer @state)})
 
-(defmethod read :git/repos
-           [{:keys [state] :as env} key {:keys [start end]}]
-           {:value (subvec (:git/repos @state) start end)})
+(defmethod read :github/repo
+           [{:keys [state] :as env} key params]
+          (go
+            (let [ch (async-get repo-uri)
+                  foo (<! ch)
+                  _ (print foo)]
+              {:value {:github/repo "Foo"}}
+              )))
 
 
-(declare git-cards)
-(declare footer-body)
-(declare footer-head)
 
 
 (defn header-template
@@ -112,6 +164,9 @@
                    items)]))
 
 (defui Page
+  static om/IQuery
+  (query [this]
+    [:app/footer :github/repo])
        Object
        (render [this]
                (let [{:keys [app/title app/footer git/repos]} (om/props this)]
@@ -122,12 +177,20 @@
                        (footer-template footer)]
                       ))))
 
+(def parser (om/parser {:read read}))
+
+
+;(def new-parser (om/parser {:read newread}))
+;(new-parser github.state/repo-state [:github/repo])
+
+;(def my-state (atom {:github/repo "bar"}))
+;(parser {:state app-state} [:github/repo])
 
 (def reconciler
   (om/reconciler
     {:state  app-state
-     :parser (om/parser {:read read})}))
+     :parser parser
+     }))
 
 
 (om/add-root! reconciler Page (gdom/getElement "app"))
-

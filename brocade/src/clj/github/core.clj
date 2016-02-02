@@ -70,7 +70,7 @@
 
 (defn assemble-report
       [repo contribs commits]
-      (let [sites (assoc {} :repo repo)
+      (let [sites (assoc {} :github/repo repo)
             contribs (assoc sites :contributors contribs)
             report (assoc contribs :last-commit commits)]
            report
@@ -94,10 +94,17 @@
                 )
            )
       )
+(defn write-func
+  []
+  (let [opening '(ns github.repo)
+        mydef '(def repo-state)]
+
+        )
+  )
+
 
 (defn -main [site]
   (let [git-state (into [] (report site))]
-      (spit "resources/public/app/app.edn" git-state)
-      ))
+      (spit "resources/public/app/app.edn" git-state)))
 
 

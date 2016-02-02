@@ -19,6 +19,7 @@
                  [org.clojure/data.json "0.2.6"]
                  [levand/immuconf "0.1.0"]
                  [hiccup "1.0.5"]
+                 [cljs-ajax "0.5.3"]
                  [org.clojure/core.async "0.2.374"
                   :exclusions [org.clojure/tools.reader]]]
 
