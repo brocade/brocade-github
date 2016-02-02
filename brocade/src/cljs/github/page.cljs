@@ -49,11 +49,14 @@
            [{:keys [state] :as env} key params]
   (go
     (let [ch (async-get repo-uri)
-                     response (<! ch)]
+          response (<! ch)
+          respvec (cljs.reader/read-string response)
+          _ (print respvec)]
               (if response)
-                {:value {:github/repo (first response)}}
+                {:value respvec}
                 {:value :not-found}
-              )))
+              ))
+  )
 
 
 (defn header-template

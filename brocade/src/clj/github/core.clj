@@ -71,30 +71,31 @@
 
 (defn assemble-report
       [repo contribs commits]
-      (let [root (assoc {} :github/root {:repo repo})
-            contribs (assoc root :contributors contribs)
+      (let [repo (assoc {} :repo repo)
+            contribs (assoc repo :contributors contribs)
             report (assoc contribs :last-commit commits)]
            report
-           )
-      )
+           ))
 
 (defn report
       "Return a collection of last-commits over a list of defined repositories"
       [site]
-      (let [repos (get-repos site)]
-           (map (fn [repo]
+      (let [repos (get-repos site)
+            report
+            (map (fn [repo]
                     (let [name (:name repo)
                           contribs (get-repo-contributors site name)
                           contrib-emails (get-contributors-email contribs)
-                          last-commits (get-lastcommits site name)
-                          ]
-                         (assemble-report repo contrib-emails last-commits)
-                         )
+                          last-commits (get-lastcommits site name)]
+
+                      (assemble-report repo contrib-emails last-commits))
                     )
                 repos
-                )
-           )
-      )
+                )]
+        (conj {} {:github/root report})
+
+      ))
+
 (defn write-func
   []
   (let [opening '(ns github.repo)
@@ -105,7 +106,7 @@
 
 
 (defn -main [site]
-  (let [git-state (into [] (report site))]
+  (let [git-state (report site)]
       (spit "resources/public/app/app.edn" git-state)))
 
 
