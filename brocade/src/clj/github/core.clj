@@ -92,7 +92,7 @@
                     )
                 repos
                 )]
-        (conj {} {:github/root report})
+        (conj {} {:app/repo report})
 
       ))
 

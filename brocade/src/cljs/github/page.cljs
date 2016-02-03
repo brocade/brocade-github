@@ -45,18 +45,17 @@
            [{:keys [state] :as env} key params]
            {:value (:app/footer @state)})
 
-(defmethod read :github/repo
+(defmethod read :github/root
            [{:keys [state] :as env} key params]
+  (print "in read")
   (go
     (let [ch (async-get repo-uri)
           response (<! ch)
-          respvec (cljs.reader/read-string response)
-          _ (print respvec)]
-              (if response)
-                {:value respvec}
-                {:value :not-found}
-              ))
-  )
+          respvec (cljs.reader/read-string response)]
+          {:value {:github/root (:github/root respvec)}}
+        )
+      )
+    )
 
 
 (defn header-template
@@ -131,28 +130,34 @@
                        [:li [:a {href href} title]])
                    items)]))
 
+(defui Repo
+  static om/IQuery
+  (query [this]
+    [:github/root]))
+
+
 (defui Page
   static om/IQuery
   (query [this]
-    [:app/footer :github/repo])
+         [:github/root]
+    ;{:github/root (om/get-query Repo)}
+         )
+
+    ;[:app/title :app/footer :github/root])
        Object
        (render [this]
-               (let [{:keys [app/title app/footer git/repos]} (om/props this)]
+               (let [{:keys [app/title app/footer]} (om/props this)]
                     (sab/html
                       [:div.mdl-layout.mdl-js-layout.mdl-layout--fixed-header
                        (header-template title)
-                       (main-template repos)
+                       ;(main-template )
                        (footer-template footer)]
                       ))))
 
 (def parser (om/parser {:read read}))
+(print (parser {:state app-state} '[:github/root]))
+(print (parser {:state app-state} [:github/root]))
 
-
-;(def new-parser (om/parser {:read newread}))
-;(new-parser github.state/repo-state [:github/repo])
-
-;(def my-state (atom {:github/repo "bar"}))
-;(parser {:state app-state} [:github/repo])
 
 (def reconciler
   (om/reconciler
