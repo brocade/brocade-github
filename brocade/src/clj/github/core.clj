@@ -66,33 +66,39 @@
 (defn get-members
       "Return a list of collaborators"
       [user repos]
-      (map #(repos/collaborators user (:name %) {:oauth-token token}) repos))
+      (map #(repos/collaborators user (:name %) {:oauth-token token}) repos)
+  )
 
 
 (defn assemble-report
       [repo contribs commits]
-      (let [repo (assoc {} :repo repo)
-            contribs (assoc repo :contributors contribs)
-            report (assoc contribs :last-commit commits)]
-           report
-           ))
+      (let [a  (assoc {} :commiters contribs)
+            b  (conj repo a commits)
+            r  (assoc {} :repo b)]
+           r
+           )
+  )
+
+
 
 (defn report
-      "Return a collection of last-commits over a list of defined repositories"
+      "Return a collection of repo commits and contributors"
       [site]
       (let [repos (get-repos site)
             report
             (map (fn [repo]
                     (let [name (:name repo)
-                          contribs (get-repo-contributors site name)
-                          contrib-emails (get-contributors-email contribs)
-                          last-commits (get-lastcommits site name)]
+                          c (get-repo-contributors site name)
+                          contribs (get-contributors-email c)
+                          commits (get-lastcommits site name)
 
-                      (assemble-report repo contrib-emails last-commits))
+                          ]
+
+                      (assemble-report repo contribs commits))
                     )
                 repos
                 )]
-        (conj {} {:app/repo report})
+        (assoc {} :app/repo (into [] report))
 
       ))
 
@@ -108,5 +114,6 @@
 (defn -main [site]
   (let [git-state (report site)]
       (spit "resources/public/app/app.edn" git-state)))
+
 
 

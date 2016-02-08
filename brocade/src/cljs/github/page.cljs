@@ -16,23 +16,29 @@
 (declare footer-body)
 (declare footer-head)
 
-(def repo-uri "https://raw.githubusercontent.com/gaberger/brocade-github/master/brocade/resources/public/app/app.edn")
+;; (def repo-uri "https://raw.githubusercontent.com/gaberger/brocade-github/master/brocade/resources/public/app/app.edn")
 
-(defn async-get
-  [url]
-  (let [ch (chan)]
-    (GET url {:handler (fn [resp]
-                         (put! ch resp))})
-    ch))
+;; (defn async-get
+;;   [url]
+;;   (let [ch (chan)]
+;;     (GET url {:handler (fn [resp]
+;;                          (put! ch resp))})
+;;     ch))
+
 
 ;; Initialize Application State
 
-(def app-state
+(defonce app-state
   (atom
     github.state/page-state
     ))
 
-(defmulti read (fn [env key params] key))
+;; (defn send-func
+;;   [uri]
+;;   {:value  {:app/repo "foo"}})
+
+
+(defmulti read om/dispatch)
 
 (defmethod read :default
            [{:keys [state] :as env} key params]
@@ -45,17 +51,16 @@
            [{:keys [state] :as env} key params]
            {:value (:app/footer @state)})
 
-(defmethod read :github/root
-           [{:keys [state] :as env} key params]
-  (print "in read")
-  (go
-    (let [ch (async-get repo-uri)
-          response (<! ch)
-          respvec (cljs.reader/read-string response)]
-          {:value {:github/root (:github/root respvec)}}
-        )
-      )
-    )
+(defmethod read :app/repo
+           [{:keys [state ast] :as env} key params]
+           {:value (:app/repo @state)})
+;;   (go
+;;     (let [ch (async-get repo-uri)
+;;           response (<! ch)
+;;           respvec (cljs.reader/read-string response)]
+;;           {:value {:app/repo (:app/repo respvec)}}
+;;         )
+;;       )
 
 
 (defn header-template
@@ -63,7 +68,9 @@
       (sab/html [:header.mdl-layout__header.mdl-layout__header--scroll.mdl-color--primary-dark
                  [:div.brocade-logo.mdl-layout__header-row
                   [:div.mdl-layout-spacer]
-                  [:span.mdl-layout-title title]]])
+                  [:span.mdl-layout-title title]]
+                  [:div.mdl-layout__header-row]
+                 ])
       )
 
 (defn main-template
@@ -71,24 +78,36 @@
       (sab/html
         [:main.mdl-layout__content
          [:div.mdl-layout__tab-panel.is-active {:id "overview"}]
-         (git-cards repos)])
+         (git-cards repos)
+         ])
       )
 
 
 (defn repo-template
-      [title desc main]
+      [title desc main link]
       (sab/html
         [:div.mdl-cell.mdl-cell--4-col
          [:div.card-square.mdl-card.mdl-shadow--2dp
-          [:div.mdl-card__title.mdl-card--expand
-           [:h2.mdl-card__title-text title]]
-
-          [:div.mdl-card__supporting-text
-           desc]
-          [:div.mdl-card__actions.mdl-card--border
-           [:a.mdl-button.mdl-button--colored.mdl-js-button.mdl-js-ripple-effect
-            main]]]]
+          ;[:div.mdl-card__title.mdl-card--expand
+          [:div.mdl-card__title
+            [:h1.mdl-card__title-text 
+              [:a {:href link} title]]]
+            [:div.mdl-card__subtitle-text 
+            desc
+            ]
+          ]
+         ]
         ))
+
+
+;;  <div class="mdl-card__actions mdl-card--border">
+;;     <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">
+;;       Add to Calendar
+;;     </a>
+;;     <div class="mdl-layout-spacer"></div>
+;;     <i class="material-icons">event</i>
+;;   </div>
+
 
 
 (defn git-cards
@@ -96,9 +115,16 @@
       (let [c (count repos)]
            (sab/html [:section.section--center
                       [:div.git-cards.mdl-grid
-                       (map #(repo-template (:title %) (:description %) (:maintainer %)) repos)
+                       (map #(repo-template
+                                 (get-in % [:repo :name])
+                                 (get-in % [:repo :description])
+                                 (get-in % [:repo :author])
+                                 (get-in % [:repo :html_url])
+                               ) repos)
+
                        ]]))
       )
+
 
 (defn footer-template
       [coll]
@@ -130,40 +156,66 @@
                        [:li [:a {href href} title]])
                    items)]))
 
-(defui Repo
+
+(defui ^:once Page
   static om/IQuery
   (query [this]
-    [:github/root]))
-
-
-(defui Page
-  static om/IQuery
-  (query [this]
-         [:github/root]
+         [:app/title :app/footer :app/repo]
     ;{:github/root (om/get-query Repo)}
          )
 
     ;[:app/title :app/footer :github/root])
        Object
        (render [this]
-               (let [{:keys [app/title app/footer]} (om/props this)]
+               (let [{:keys [app/title app/footer app/repo]} (om/props this)]
                     (sab/html
                       [:div.mdl-layout.mdl-js-layout.mdl-layout--fixed-header
                        (header-template title)
-                       ;(main-template )
+                       (main-template repo)
                        (footer-template footer)]
                       ))))
 
 (def parser (om/parser {:read read}))
-(print (parser {:state app-state} '[:github/root]))
-(print (parser {:state app-state} [:github/root]))
 
+
+;; (print (parser {:state app-state} [:app/repo]))
+;; (parser {:state app-state} (om/get-query Repo))
+;; (parser {:state app-state} (om/get-query Page))
+
+
+
+;; (defui Repo
+;;   static om/IQuery
+;;   (query [_]
+;;     '[:app/repo])
+;;   Object
+;;   (render [this]
+;;     (let [{:keys [app/repo]} (om/props this)]
+;;       (sab/html [:div
+;;                  [:h2 "test"]
+;;                  [:p repo]])
+;;         )))
+
+
+(def send-chan (chan))
 
 (def reconciler
   (om/reconciler
-    {:state  app-state
-     :parser parser
+    {:state app-state
+     :parser (om/parser {:read read})
+;;      :send (async-get repo-uri)
+;;      :remotes [:remote :repo]
      }))
 
 
-(om/add-root! reconciler Page (gdom/getElement "app"))
+(defn init []
+  (if (nil? @app-state)
+    (let [target (js/document.getElementById "app")]
+      (om/add-root! reconciler Page target)
+      (reset! app-state RootComponent))
+    (om/force-root-render! reconciler)))
+
+(init)
+
+
+
