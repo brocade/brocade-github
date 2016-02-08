@@ -65,7 +65,7 @@
 
 (defn header-template
       [title]
-      (sab/html [:header.mdl-layout__header.mdl-layout__header--scroll.mdl-color--primary-dark
+      (sab/html [:header.mdl-layout__header.mdl-layout__header--scroll
                  [:div.brocade-logo.mdl-layout__header-row
                   [:div.mdl-layout-spacer]
                   [:span.mdl-layout-title title]]
@@ -90,9 +90,9 @@
          [:div.card-square.mdl-card.mdl-shadow--2dp
           ;[:div.mdl-card__title.mdl-card--expand
           [:div.mdl-card__title
-            [:h1.mdl-card__title-text 
+            [:h1.mdl-card__title-text
               [:a {:href link} title]]]
-            [:div.mdl-card__subtitle-text 
+            [:div.mdl-card__subtitle-text
             desc
             ]
           ]
@@ -207,15 +207,16 @@
 ;;      :remotes [:remote :repo]
      }))
 
+(om/add-root! reconciler Page (js/document.getElementById "app"))
 
-(defn init []
-  (if (nil? @app-state)
-    (let [target (js/document.getElementById "app")]
-      (om/add-root! reconciler Page target)
-      (reset! app-state RootComponent))
-    (om/force-root-render! reconciler)))
 
-(init)
+;; (if (nil? @app-state)
+;;     (let [target (js/document.getElementById "app")]
+;;       (om/add-root! reconciler Page target)
+;;       #_(reset! app-state Page))
+;;     #_(om/force-root-render! reconciler)
+;;     )
+
 
 
 

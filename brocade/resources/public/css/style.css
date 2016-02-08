@@ -1,4 +1,13 @@
 
+html body {
+  background: #9B132A;
+}
+
+.mdl-brocade .mdl-layout__header {
+ background: #9B132A;
+}
+
+
 
 .mdl-brocade .brocade-logo {
   background: url(/img/sprite-global.png) 0 0;
