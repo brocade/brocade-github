@@ -72,7 +72,7 @@
       [title items]
       (sab/html [:nav.light-blue.lighten-1 {:role "navigation"}
                   [:div.nav-wrapper.container
-                   [:a.brand-logo {:id "logo-container"} title]
+                   [:a.brand-logo {:href "" :id "logo-container"} [:h1.brocade-logo] ]
                    (header-items items)
                    [:a.button-collapse {:data-activates "nav-mobile"} [:i.material-icons "menu"]]
                   ]
@@ -244,7 +244,3 @@
 ;;       #_(reset! app-state Page))
 ;;     #_(om/force-root-render! reconciler)
 ;;     )
-
-
-
-
