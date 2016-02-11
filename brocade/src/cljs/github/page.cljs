@@ -33,9 +33,18 @@
     github.state/page-state
     ))
 
-;; (defn send-func
-;;   [uri]
-;;   {:value  {:app/repo "foo"}})
+(defn send-func
+  [uri]
+  {  :app/repo {:repo
+             {:name "brocade",
+              :html_url "https://github.com/brocade/brocade",
+              :forks 1,
+              :description "Brocade Openstack Quantum Plugin",
+              :commiters [],
+              :lastcommit "4123372a06aa2d26889f2987303b0634198f5807",
+              :date "2013-06-03T18:39:46Z",
+              :author "Shiv Haris",
+              :email "sharis@brocade.com"}}})
 
 
 (defmulti read om/dispatch)
@@ -51,9 +60,23 @@
            [{:keys [state] :as env} key params]
            {:value (:app/footer @state)})
 
+
 (defmethod read :app/repo
            [{:keys [state ast] :as env} key params]
-           {:value (:app/repo @state)})
+  (let [st @state]
+    (let [v (send-func "foo")
+          _ (print v)]
+      (if v
+           {:value v :remote true}
+           {:value v}
+
+      ))))
+
+
+
+;; (defmethod read :app/repo
+;;            [{:keys [state ast] :as env} key params]
+;;            {:value (:app/repo @state)})
 ;;   (go
 ;;     (let [ch (async-get repo-uri)
 ;;           response (<! ch)
@@ -160,7 +183,8 @@
 (defui ^:once Page
   static om/IQuery
   (query [this]
-         [:app/title :app/footer :app/repo]
+;;          [:app/title :app/footer ]
+         [:app/repo]
     ;{:github/root (om/get-query Repo)}
          )
 
@@ -170,6 +194,7 @@
                (let [{:keys [app/title app/footer app/repo]} (om/props this)]
                     (sab/html
                       [:div.mdl-layout.mdl-js-layout.mdl-layout--fixed-header
+                       [:p repo]
                        (header-template title)
                        (main-template repo)
                        (footer-template footer)]
