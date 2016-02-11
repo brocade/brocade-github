@@ -13,6 +13,7 @@
 (enable-console-print!)
 
 (declare git-cards)
+(declare header-items)
 (declare footer-body)
 (declare footer-head)
 
@@ -47,6 +48,10 @@
                         {:value value}
                         {:value :not-found})))
 
+(defmethod read :app/header
+           [{:keys [state] :as env} key params]
+           {:value (:app/header @state)})
+
 (defmethod read :app/footer
            [{:keys [state] :as env} key params]
            {:value (:app/footer @state)})
@@ -64,39 +69,60 @@
 
 
 (defn header-template
-      [title]
-      (sab/html [:header.mdl-layout__header.mdl-layout__header--scroll
-                 [:div.brocade-logo.mdl-layout__header-row
-                  [:div.mdl-layout-spacer]
-                  [:span.mdl-layout-title title]]
-                  [:div.mdl-layout__header-row]
-                 ])
-      )
+      [title items]
+      (sab/html [:nav.light-blue.lighten-1 {:role "navigation"}
+                  [:div.nav-wrapper.container
+                   [:a.brand-logo {:id "logo-container"} title]
+                   (header-items items)
+                   [:a.button-collapse {:data-activates "nav-mobile"} [:i.material-icons "menu"]]
+                  ]
+                ]))
+
+(defn header-items
+      [items]
+      (sab/html [[:ul.right.hide-on-med-and-down
+                 (map
+                   (fn [{:keys [title href]}]
+                       [:li [:a {:href href} title]])
+                   items)
+                ]
+                [:ul.side-nav {:id "nav-mobile"}
+                 (map
+                   (fn [{:keys [title href]}]
+                       [:li [:a {:href href} title]])
+                   items)
+                ]]))
+
 
 (defn main-template
       [repos]
       (sab/html
-        [:main.mdl-layout__content
-         [:div.mdl-layout__tab-panel.is-active {:id "overview"}]
-         (git-cards repos)
-         ])
+        [:div.container
+         [:div.section
+           [:div.row
+             [:div.col.s12
+               (git-cards repos)
+             ]
+           ]
+         ]
+        ])
       )
 
 
 (defn repo-template
       [title desc main link]
       (sab/html
-        [:div.mdl-cell.mdl-cell--4-col
-         [:div.card-square.mdl-card.mdl-shadow--2dp
-          ;[:div.mdl-card__title.mdl-card--expand
-          [:div.mdl-card__title
-            [:h1.mdl-card__title-text
-              [:a {:href link} title]]]
-            [:div.mdl-card__subtitle-text
-            desc
+          [:div.col.s12.m6
+            [:div.card.small
+             [:div.card-content
+              [:span.card-title title]
+              [:p desc]
+             ]
+             [:div.card-action
+               [:a {:href link} title]
+             ]
             ]
           ]
-         ]
         ))
 
 
@@ -113,64 +139,66 @@
 (defn git-cards
       [repos]
       (let [c (count repos)]
-           (sab/html [:section.section--center
-                      [:div.git-cards.mdl-grid
+           (sab/html [:div.row
                        (map #(repo-template
                                  (get-in % [:repo :name])
                                  (get-in % [:repo :description])
                                  (get-in % [:repo :author])
                                  (get-in % [:repo :html_url])
                                ) repos)
-
-                       ]]))
+                       ]))
       )
 
 
 (defn footer-template
       [coll]
       (sab/html
-        [:footer.mdl-mega-footer
-         [:div.mdl-mega-footer__middle-section
-          (footer-head coll)
+        [:footer.page-footer.orange
+         [:div.container
+          [:div.row
+           [(footer-head coll)]
           ]
          ]
-        )
+         [:div.footer-copyright
+          [:div.container]
+         ]
+        ]
       )
+)
 
 
 (defn footer-head
       [coll]
       (map (fn [{:keys [heading items checked?]}]
-               [:div.mdl-mega-footer__drop-down-section
-                [:input.mdl-mega-footer__heading-checkbox {:type "checkbox"}]
-                [:h1.mdl-mega-footer__heading heading]
+               [:div.col.l4.s12
+                [:h5.white-text heading]
                 (footer-body items)])
            coll)
       )
 
 (defn footer-body
       [items]
-      (sab/html [:ul.mdl-mega-footer__link-list
+      (sab/html [:ul
                  (map
                    (fn [{:keys [title href]}]
-                       [:li [:a {href href} title]])
+                       [:li [:a.white-text {:href href} title]])
                    items)]))
 
 
 (defui ^:once Page
   static om/IQuery
   (query [this]
-         [:app/title :app/footer :app/repo]
+         [:app/title :app/header :app/footer :app/repo]
     ;{:github/root (om/get-query Repo)}
          )
 
     ;[:app/title :app/footer :github/root])
        Object
        (render [this]
-               (let [{:keys [app/title app/footer app/repo]} (om/props this)]
+               (let [{:keys [app/title app/header app/footer app/repo]} (om/props this)]
                     (sab/html
-                      [:div.mdl-layout.mdl-js-layout.mdl-layout--fixed-header
-                       (header-template title)
+                      [:div
+                       (header-template title header)
                        (main-template repo)
                        (footer-template footer)]
                       ))))
