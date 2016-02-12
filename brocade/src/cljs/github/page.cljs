@@ -70,7 +70,7 @@
 
 (defn header-template
       [title items]
-      (sab/html [:nav.light-blue.lighten-1 {:role "navigation"}
+      (sab/html [:nav.brocade-red {:role "navigation"}
                   [:div.nav-wrapper.container
                    [:a.brand-logo {:href "" :id "logo-container"} [:h1.brocade-logo] ]
                    (header-items items)
@@ -153,7 +153,7 @@
 (defn footer-template
       [coll]
       (sab/html
-        [:footer.page-footer.orange
+        [:footer.page-footer.grey.darken-1
          [:div.container
           [:div.row
            [(footer-head coll)]
