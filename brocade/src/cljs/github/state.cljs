@@ -2,6 +2,8 @@
 
 (def page-state
   {:app/title "Brocade | OSS "
+   :app/header
+              [{:title "Projects" :href "#"}]
    :app/footer
               [{:heading "Projects" :items [{:title "Repositories" :href "#"}
                                             {:title "OpenDaylight" :href "#"}
