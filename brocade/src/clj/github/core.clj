@@ -98,7 +98,8 @@
                     )
                 repos
                 )]
-        (assoc {} :app/repo (into [] report))
+        ; (assoc {} :app/repo (into [] report))
+       (into [] report)
 
       ))
 

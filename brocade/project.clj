@@ -10,10 +10,11 @@
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [org.clojure/clojurescript "1.7.170"]
                  [cljsjs/react "0.14.3-0"]
-                 [org.omcljs/om "1.0.0-alpha30"]
-                 [cljsjs/react-dom "0.14.3-1"]
-                 [cljsjs/react-dom-server "0.14.3-0"]
-                 [sablono "0.5.3"]
+                 [reagent "0.6.0-alpha"]
+                 [re-frame "0.7.0-alpha-2"]
+                 [binaryage/devtools "0.5.2"]
+                 [org.clojars.stumitchell/clairvoyant "0.2.0"]
+                 [day8/re-frame-tracer "0.1.0-SNAPSHOT"]
                  [tentacles "0.5.1"]
                  [clj-time "0.8.0"]
                  [org.clojure/data.json "0.2.6"]
@@ -53,6 +54,7 @@
                                :main         github.page
                                ;:optimizations :advanced
                                ;:optimizations :none
+                               :closure-defines {goog.DEBUG false}
                                :pretty-print false}}]}
 
   :figwheel {;; :http-server-root "public" ;; default and assumes "resources"

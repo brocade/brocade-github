@@ -1,14 +1,24 @@
 (ns github.page
-  (:require
-    [sablono.core :as sab :include-macros true]
-    [goog.dom :as gdom]
-    [om.dom :as dom]
-    [om.next :as om :refer-macros [defui]]
-    [ajax.core :refer [GET] :as ajax]
-    [github.state]
-    [cljs.core.async :refer [put! chan <! >! close!]]
-    )
-  (:require-macros [cljs.core.async.macros :refer [go]]))
+(:require [reagent.core :as reagent]
+          ;[reframetest.config]
+          [re-frame.core :refer [register-handler
+                                   path
+                                   register-sub
+                                   dispatch
+                                   dispatch-sync
+                                   subscribe]]
+          [ajax.core :refer [GET] :as ajax]
+          [github.state]
+          [devtools.core :as devtools]
+          [cljs.core.async :refer [put! chan <! >! close!]]
+          [clairvoyant.core :refer-macros [trace-forms]]
+          [re-frame-tracer.core :refer [tracer]]
+          )
+ (:require-macros [reagent.ratom :refer [reaction]]
+ 									[cljs.core.async.macros :refer [go]]))
+
+; (devtools/enable-feature! :sanity-hints :dirac)
+; (devtools/install!)
 
 (enable-console-print!)
 
@@ -17,71 +27,63 @@
 (declare footer-body)
 (declare footer-head)
 
-;; (def repo-uri "https://raw.githubusercontent.com/gaberger/brocade-github/master/brocade/resources/public/app/app.edn")
+(def repo-uri "https://raw.githubusercontent.com/gaberger/brocade-github/master/brocade/resources/public/app/app.edn")
 
-;; (defn async-get
-;;   [url]
-;;   (let [ch (chan)]
-;;     (GET url {:handler (fn [resp]
-;;                          (put! ch resp))})
-;;     ch))
-
-
-;; Initialize Application State
-
-(defonce app-state
-  (atom
-    github.state/page-state
-    ))
-
-;; (defn send-func
-;;   [uri]
-;;   {:value  {:app/repo "foo"}})
+(register-handler
+  :get-repo             ;; <-- the button dispatched this id
+  (fn
+    [db _]
+    (GET
+      repo-uri
+      {:handler       #(dispatch [:process-response %1])   ;; further dispatch !!
+       :error-handler #(dispatch [:bad-response %1])}) 
+       db))
 
 
-(defmulti read om/dispatch)
+(register-handler               ;; when the GET succeeds 
+  :process-response             ;; the GET callback dispatched this event  
+  (fn
+    [db [_ response]]           ;; extract the response from the dispatch event vector
+    (-> db
+        (assoc :app/repo (js->clj response)))))  ;; fairly lame processing
 
-(defmethod read :default
-           [{:keys [state] :as env} key params]
-           (let [st @state]
-                (if-let [[_ value] (find st key)]
-                        {:value value}
-                        {:value :not-found})))
-
-(defmethod read :app/header
-           [{:keys [state] :as env} key params]
-           {:value (:app/header @state)})
-
-(defmethod read :app/footer
-           [{:keys [state] :as env} key params]
-           {:value (:app/footer @state)})
+(register-handler              
+  :bad-response             
+  (fn
+    [db [_ response]]
+    (-> db
+        (assoc :app/repo github.state/fail-state)))) 
 
 
-(defmethod read :app/repo
-           [{:keys [state ast] :as env} key params]
-           {:value (:app/repo @state)})
-;;   (go
-;;     (let [ch (async-get repo-uri)
-;;           response (<! ch)
-;;           respvec (cljs.reader/read-string response)]
-;;           {:value {:app/repo (:app/repo respvec)}}
-;;         )
-;;       )
+(register-sub
+  :repo
+  (fn [db]
+  (reaction (:app/repo @db))))
+
+
+(register-handler                 ;; setup initial state
+  :initialize                     ;; usage:  (submit [:initialize])
+  (fn
+    [db _]
+    (merge db nil)))
+
+
 
 
 (defn header-template
       [title items]
-      (sab/html [:nav.brocade-red {:role "navigation"}
+        [:nav.brocade-red {:role "navigation"}
                   [:div.nav-wrapper.container
                    [:a.brand-logo {:href "" :id "logo-container"} [:h1.brocade-logo] ]
-                   (header-items items)
+                   [header-items items]
                    [:a.button-collapse {:data-activates "nav-mobile"} [:i.material-icons "menu"]]
                   ]
-                ]))
+                ])
 
 (defn header-items
       [items]
-      (sab/html [[:ul.right.hide-on-med-and-down
+      (fn []
+      [:ul.right.hide-on-med-and-down
                  (map
                    (fn [{:keys [title href]}]
                        [:li [:a {:href href} title]])
@@ -92,12 +94,11 @@
                    (fn [{:keys [title href]}]
                        [:li [:a {:href href} title]])
                    items)
-                ]]))
+                ]))
 
 
 (defn main-template
       [repos]
-      (sab/html
         [:div.container
          [:div.section
            [:div.row
@@ -107,12 +108,10 @@
            ]
          ]
         ])
-      )
 
 
 (defn repo-template
       [title desc main link]
-      (sab/html
           [:div.col.s12.m6
             [:div.card.small
              [:div.card-content
@@ -124,48 +123,38 @@
              ]
             ]
           ]
-        ))
-
-
-;;  <div class="mdl-card__actions mdl-card--border">
-;;     <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">
-;;       Add to Calendar
-;;     </a>
-;;     <div class="mdl-layout-spacer"></div>
-;;     <i class="material-icons">event</i>
-;;   </div>
+        )
 
 
 
 (defn git-cards
       [repos]
-      (let [c (count repos)]
-           (sab/html [:div.row
+      (let [c (count repos)
+            _ (print repos)]
+            [:div.row
                        (map #(repo-template
                                  (get-in % [:repo :name])
                                  (get-in % [:repo :description])
                                  (get-in % [:repo :author])
                                  (get-in % [:repo :html_url])
                                ) repos)
-                       ]))
+                       ])
       )
 
 
 (defn footer-template
       [coll]
-      (sab/html
         [:footer.page-footer.grey.darken-1
          [:div.container
           [:div.row
-           [(footer-head coll)]
+           (footer-head coll)
           ]
          ]
          [:div.footer-copyright
           [:div.container]
          ]
         ]
-      )
-)
+    )
 
 
 (defn footer-head
@@ -179,69 +168,27 @@
 
 (defn footer-body
       [items]
-      (sab/html [:ul
+        [:ul
                  (map
                    (fn [{:keys [title href]}]
                        [:li [:a.white-text {:href href} title]])
-                   items)]))
+                   items)])
+
+(defn Page
+  []
+  (let [{:keys [app/title app/header app/footer]} github.state/page-state
+         repo (subscribe [:repo])]
+         [:div
+          (header-template title header)
+          (main-template @repo)
+          (footer-template footer)
+          ]))
+
+(defn ^:export init
+  []
+  (dispatch-sync [:initialize])
+  (dispatch-sync [:get-repo])
+  (reagent/render [Page]
+                  (js/document.getElementById "app")))
 
 
-(defui ^:once Page
-  static om/IQuery
-  (query [this]
-         [:app/title :app/header :app/footer :app/repo]
-    ;{:github/root (om/get-query Repo)}
-         )
-
-    ;[:app/title :app/footer :github/root])
-       Object
-       (render [this]
-               (let [{:keys [app/title app/header app/footer app/repo]} (om/props this)]
-                    (sab/html
-                      [:div
-                       (header-template title header)
-                       (main-template repo)
-                       (footer-template footer)]
-                      ))))
-
-(def parser (om/parser {:read read}))
-
-
-;; (print (parser {:state app-state} [:app/repo]))
-;; (parser {:state app-state} (om/get-query Repo))
-;; (parser {:state app-state} (om/get-query Page))
-
-
-
-;; (defui Repo
-;;   static om/IQuery
-;;   (query [_]
-;;     '[:app/repo])
-;;   Object
-;;   (render [this]
-;;     (let [{:keys [app/repo]} (om/props this)]
-;;       (sab/html [:div
-;;                  [:h2 "test"]
-;;                  [:p repo]])
-;;         )))
-
-
-(def send-chan (chan))
-
-(def reconciler
-  (om/reconciler
-    {:state app-state
-     :parser (om/parser {:read read})
-;;      :send (async-get repo-uri)
-;;      :remotes [:remote :repo]
-     }))
-
-(om/add-root! reconciler Page (js/document.getElementById "app"))
-
-
-;; (if (nil? @app-state)
-;;     (let [target (js/document.getElementById "app")]
-;;       (om/add-root! reconciler Page target)
-;;       #_(reset! app-state Page))
-;;     #_(om/force-root-render! reconciler)
-;;     )
