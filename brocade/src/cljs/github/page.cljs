@@ -27,13 +27,13 @@
 (declare footer-body)
 (declare footer-head)
 
-(def repo-uri "https://raw.githubusercontent.com/gaberger/brocade-github/master/brocade/resources/public/app/app.edn")
+(def repo-uri "https://raw.githubusercontent.com/gaberger/brocade-github/develop/brocade/resources/public/app/app.edn")
 
 (register-handler
   :get-repo             ;; <-- the button dispatched this id
   (fn
     [db _]
-    (GET
+    (ajax/GET
       repo-uri
       {:handler       #(dispatch [:process-response %1])   ;; further dispatch !!
        :error-handler #(dispatch [:bad-response %1])}) 
@@ -44,8 +44,8 @@
   :process-response             ;; the GET callback dispatched this event  
   (fn
     [db [_ response]]           ;; extract the response from the dispatch event vector
-    (-> db
-        (assoc :app/repo (js->clj response)))))  ;; fairly lame processing
+    (assoc db :app/repo (cljs.reader/read-string response )) 
+  )) 
 
 (register-handler              
   :bad-response             
@@ -59,14 +59,6 @@
   :repo
   (fn [db]
   (reaction (:app/repo @db))))
-
-
-(register-handler                 ;; setup initial state
-  :initialize                     ;; usage:  (submit [:initialize])
-  (fn
-    [db _]
-    (merge db nil)))
-
 
 
 
@@ -86,13 +78,13 @@
       [:ul.right.hide-on-med-and-down
                  (map
                    (fn [{:keys [title href]}]
-                       [:li [:a {:href href} title]])
+                       ^{:key title} [:li [:a {:href href} title]])
                    items)
                 ]
                 [:ul.side-nav {:id "nav-mobile"}
                  (map
                    (fn [{:keys [title href]}]
-                       [:li [:a {:href href} title]])
+                        ^{:key title} [:li [:a {:href href} title]])
                    items)
                 ]))
 
@@ -112,7 +104,7 @@
 
 (defn repo-template
       [title desc main link]
-          [:div.col.s12.m6
+          ^{:key title} [:div.col.s12.m6
             [:div.card.small
              [:div.card-content
               [:span.card-title title]
@@ -129,8 +121,6 @@
 
 (defn git-cards
       [repos]
-      (let [c (count repos)
-            _ (print repos)]
             [:div.row
                        (map #(repo-template
                                  (get-in % [:repo :name])
@@ -138,9 +128,8 @@
                                  (get-in % [:repo :author])
                                  (get-in % [:repo :html_url])
                                ) repos)
-                       ])
+                       ]
       )
-
 
 (defn footer-template
       [coll]
@@ -160,8 +149,8 @@
 (defn footer-head
       [coll]
       (map (fn [{:keys [heading items checked?]}]
-               [:div.col.l4.s12
-                [:h5.white-text heading]
+               ^{:key heading} [:div.col.l4.s12
+                  [:h5.white-text heading]
                 (footer-body items)])
            coll)
       )
@@ -171,7 +160,7 @@
         [:ul
                  (map
                    (fn [{:keys [title href]}]
-                       [:li [:a.white-text {:href href} title]])
+                      ^{:key title} [:li [:a.white-text {:href href} title]])
                    items)])
 
 (defn Page
@@ -186,7 +175,6 @@
 
 (defn ^:export init
   []
-  (dispatch-sync [:initialize])
   (dispatch-sync [:get-repo])
   (reagent/render [Page]
                   (js/document.getElementById "app")))

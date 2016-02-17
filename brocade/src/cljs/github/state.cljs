@@ -17,15 +17,15 @@
 
 (def fail-state
 [{:repo
-             {:name "brocade",
-              :html_url "https://github.com/brocade/brocade",
+             {:name "Brocade",
+              :html_url "https://github.com/brocade",
               :forks 1,
-              :description "Brocade Openstack Quantum Plugin",
+              :description "Brocade GitHub Repository",
               :commiters [],
               :lastcommit "4123372a06aa2d26889f2987303b0634198f5807",
               :date "2013-06-03T18:39:46Z",
-              :author "Shiv Haris",
-              :email "sharis@brocade.com"}}]
+              :author "Brocade Communications",
+              :email "noreply@brocade.com"}}]
   )
 
 
