@@ -1,0 +1,3 @@
+[submodule "github.io"]
+	path = brocade/resources/public
+	url = git@github.com:brocade/brocade.github.io.git
