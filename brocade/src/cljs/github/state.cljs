@@ -4,15 +4,16 @@
   {:app/title "OSS"
    :app/header
               [{:title "Brocade" :href "http://www.brocade.com"}
-                {:title "Foo" :href "#"}]
+              ]
    :app/footer
               [{:heading "Projects" :items [{:title "Repositories" :href "https://www.github.com/brocade"}
                                             {:title "OpenDaylight" :href "https://www.opendaylight.org/"}
                                             {:title "OpenStack" :href "https://www.openstack.org/brocade"}]}
-               {:heading "Technology" :items [{:title "Software Networking" :href "#"}]}
+               {:heading "Technology" :items [{:title "SDN Controller and Applications" :href "https://www.brocade.com/en/products-services/software-networking/sdn-controllers-applications.html"}
+                                              {:title "Network Function Virtualization" :href "https://www.brocade.com/en/products-services/software-networking/network-functions-virtualization.html"}]}
                {:heading "Resources" :items [{:title "Getting Started" :href "https://community.brocade.com/t5/SDN-NFV/ct-p/SdnNfv"}
                                              {:title "Brocade OpenSource Code" :href "https://www.brocade.com/en/support/support-tools/oscd.html"}
-                                             {:title "Support" :href "#"}
+                                             {:title "DevNet" :href "https://community.brocade.com/t5/DevNet/ct-p/APISupport"}
                                        ]}]
    }
   )
