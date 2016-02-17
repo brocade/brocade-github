@@ -1,0 +1,3 @@
+lein: lein
+script: lein cljsbuild once min
+script: lein run -m github.core brocade
