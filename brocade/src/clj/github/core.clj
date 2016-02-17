@@ -8,7 +8,9 @@
       [environ.core :refer [env]]
       [immuconf.config]))
 
-(def token (immuconf.config/get (immuconf.config/load "resources/config/config.edn") :git-token))
+; (def token (immuconf.config/get (immuconf.config/load "resources/config/config.edn") :git-token))
+
+(def token (env :gittoken))
 
 (def sites [{:user "brocade" :repo "brocade"}
             {:user "BRCDcomm" :repo "BRCDcomm"}])
