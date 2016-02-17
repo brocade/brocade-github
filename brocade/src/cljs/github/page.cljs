@@ -33,7 +33,7 @@
   :get-repo             ;; <-- the button dispatched this id
   (fn
     [db _]
-    (ajax/GET
+    (GET
       repo-uri
       {:handler       #(dispatch [:process-response %1])   ;; further dispatch !!
        :error-handler #(dispatch [:bad-response %1])}) 
@@ -67,7 +67,7 @@
         [:nav.brocade-red {:role "navigation"}
                   [:div.nav-wrapper.container
                    [:a.brand-logo {:href "" :id "logo-container"} [:h1.brocade-logo] ]
-                   [header-items items]
+                   (header-items items)
                    [:a.button-collapse {:data-activates "nav-mobile"} [:i.material-icons "menu"]]
                   ]
                 ])
@@ -175,7 +175,7 @@
 
 (defn ^:export init
   []
-  (dispatch-sync [:get-repo])
+  (dispatch [:get-repo])
   (reagent/render [Page]
                   (js/document.getElementById "app")))
 
