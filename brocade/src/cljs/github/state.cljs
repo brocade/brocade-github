@@ -3,14 +3,16 @@
 (def page-state
   {:app/title "OSS"
    :app/header
-              [{:title "Projects" :href "#"}]
+              [{:title "Brocade" :href "http://www.brocade.com"}
+                {:title "Foo" :href "#"}]
    :app/footer
-              [{:heading "Projects" :items [{:title "Repositories" :href "#"}
-                                            {:title "OpenDaylight" :href "#"}
-                                            {:title "OpenStack" :href "#"}]}
+              [{:heading "Projects" :items [{:title "Repositories" :href "https://www.github.com/brocade"}
+                                            {:title "OpenDaylight" :href "https://www.opendaylight.org/"}
+                                            {:title "OpenStack" :href "https://www.openstack.org/brocade"}]}
                {:heading "Technology" :items [{:title "Software Networking" :href "#"}]}
-               {:heading "FAQ" :items [{:title "Getting Started" :href "#"}
-                                       {:title "Support" :href "#"}
+               {:heading "Resources" :items [{:title "Getting Started" :href "https://community.brocade.com/t5/SDN-NFV/ct-p/SdnNfv"}
+                                             {:title "Brocade OpenSource Code" :href "https://www.brocade.com/en/support/support-tools/oscd.html"}
+                                             {:title "Support" :href "#"}
                                        ]}]
    }
   )
