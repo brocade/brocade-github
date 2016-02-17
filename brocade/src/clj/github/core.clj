@@ -10,7 +10,7 @@
 
 ; (def token (immuconf.config/get (immuconf.config/load "resources/config/config.edn") :git-token))
 
-(def token (env :gittoken))
+
 
 (def sites [{:user "brocade" :repo "brocade"}
             {:user "BRCDcomm" :repo "BRCDcomm"}])
@@ -24,7 +24,7 @@
 
 (defn get-repos
       "Return collection of repos based on user/org"
-      [user]
+      [user token]
       (pmap #(select-keys % [:name :html_url :forks :description])
             (repos/user-repos user {:oauth-token token}))
       )
@@ -32,7 +32,7 @@
 
 (defn get-lastcommits
       "Return a collection containing the sha, date, name and url of lastcommit for user and a collection of repos"
-      [user repo]
+      [user repo token]
       (let [lastcommit (first (repos/commits user repo {:oauth-token token}))
             sha (:sha lastcommit)
             date (get-in lastcommit [:commit :author :date])
@@ -45,14 +45,14 @@
 
 (defn get-repo-contributors
       "Return a list of repo contributors"
-      [user repo]
+      [user repo token]
       (map #(:login %) (repos/contributors user repo {:oauth-token token})
            ))
 
 
 (defn get-contributors-email
       "Take a list of users and return a map of user names and emails"
-      [users]
+      [users token]
       (reduce (fn [output user]
                   (let [record (users/user user {:oauth-token token})
                         email (:email record)
@@ -67,7 +67,7 @@
 
 (defn get-members
       "Return a list of collaborators"
-      [user repos]
+      [user repos token]
       (map #(repos/collaborators user (:name %) {:oauth-token token}) repos)
   )
 
@@ -85,14 +85,14 @@
 
 (defn report
       "Return a collection of repo commits and contributors"
-      [site]
-      (let [repos (get-repos site)
+      [site token]
+      (let [repos (get-repos site token)
             report
             (map (fn [repo]
                     (let [name (:name repo)
-                          c (get-repo-contributors site name)
-                          contribs (get-contributors-email c)
-                          commits (get-lastcommits site name)
+                          c (get-repo-contributors site name token)
+                          contribs (get-contributors-email c token)
+                          commits (get-lastcommits site name token)
 
                           ]
 
@@ -105,18 +105,14 @@
 
       ))
 
-(defn write-func
-  []
-  (let [opening '(ns github.repo)
-        mydef '(def repo-state)]
-
-        )
-  )
-
 
 (defn -main [site]
-  (let [git-state (report site)]
-      (spit "resources/public/app/app.edn" git-state)))
+  (let [token (env :gittoken)]
+  (if (nil? token)
+      (do
+        (println "Please set env variable gittoken")
+        (System/exit 0)))
+      (spit "resources/public/app/app.edn" (report site token))))
 
 
 
