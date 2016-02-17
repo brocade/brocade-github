@@ -23,7 +23,6 @@
 (enable-console-print!)
 
 (declare git-cards)
-(declare header-items)
 (declare footer-body)
 (declare footer-head)
 
@@ -36,23 +35,23 @@
     (GET
       repo-uri
       {:handler       #(dispatch [:process-response %1])   ;; further dispatch !!
-       :error-handler #(dispatch [:bad-response %1])}) 
+       :error-handler #(dispatch [:bad-response %1])})
        db))
 
 
-(register-handler               ;; when the GET succeeds 
-  :process-response             ;; the GET callback dispatched this event  
+(register-handler               ;; when the GET succeeds
+  :process-response             ;; the GET callback dispatched this event
   (fn
     [db [_ response]]           ;; extract the response from the dispatch event vector
-    (assoc db :app/repo (cljs.reader/read-string response )) 
-  )) 
+    (assoc db :app/repo (cljs.reader/read-string response ))
+  ))
 
-(register-handler              
-  :bad-response             
+(register-handler
+  :bad-response
   (fn
     [db [_ response]]
     (-> db
-        (assoc :app/repo github.state/fail-state)))) 
+        (assoc :app/repo github.state/fail-state))))
 
 
 (register-sub
@@ -66,27 +65,18 @@
       [title items]
         [:nav.brocade-red {:role "navigation"}
                   [:div.nav-wrapper.container
-                   [:a.brand-logo {:href "" :id "logo-container"} [:h1.brocade-logo] ]
-                   (header-items items)
+                   [:a.brand-logo {:href "" :id "logo-container"} [:h1.brocade-logo] [:span.sub-title title]]
+                   [:ul.right.hide-on-med-and-down (map
+                     (fn [{:keys [title href]}]
+                         ^{:key title} [:li [:a {:href href} title]])
+                     items)]
+                   [:ul.side-nav {:id "nav-mobile"} (map
+                     (fn [{:keys [title href]}]
+                         ^{:key title} [:li [:a {:href href} title]])
+                     items)]
                    [:a.button-collapse {:data-activates "nav-mobile"} [:i.material-icons "menu"]]
                   ]
                 ])
-
-(defn header-items
-      [items]
-      (fn []
-      [:ul.right.hide-on-med-and-down
-                 (map
-                   (fn [{:keys [title href]}]
-                       ^{:key title} [:li [:a {:href href} title]])
-                   items)
-                ]
-                [:ul.side-nav {:id "nav-mobile"}
-                 (map
-                   (fn [{:keys [title href]}]
-                        ^{:key title} [:li [:a {:href href} title]])
-                   items)
-                ]))
 
 
 (defn main-template
@@ -178,5 +168,3 @@
   (dispatch [:get-repo])
   (reagent/render [Page]
                   (js/document.getElementById "app")))
-
-

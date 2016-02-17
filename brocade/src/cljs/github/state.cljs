@@ -1,7 +1,7 @@
 (ns github.state)
 
 (def page-state
-  {:app/title "Brocade | OSS "
+  {:app/title "OSS"
    :app/header
               [{:title "Projects" :href "#"}]
    :app/footer
@@ -27,5 +27,3 @@
               :author "Brocade Communications",
               :email "noreply@brocade.com"}}]
   )
-
-
