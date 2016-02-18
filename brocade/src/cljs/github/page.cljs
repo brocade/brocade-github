@@ -1,6 +1,6 @@
 (ns github.page
 (:require [reagent.core :as reagent]
-          ;[reframetest.config]
+          [cljs.reader :refer [read-string]]
           [re-frame.core :refer [register-handler
                                    path
                                    register-sub
@@ -9,16 +9,10 @@
                                    subscribe]]
           [ajax.core :refer [GET] :as ajax]
           [github.state]
-          [devtools.core :as devtools]
           [cljs.core.async :refer [put! chan <! >! close!]]
-          [clairvoyant.core :refer-macros [trace-forms]]
-          [re-frame-tracer.core :refer [tracer]]
           )
  (:require-macros [reagent.ratom :refer [reaction]]
  									[cljs.core.async.macros :refer [go]]))
-
-; (devtools/enable-feature! :sanity-hints :dirac)
-; (devtools/install!)
 
 (enable-console-print!)
 
