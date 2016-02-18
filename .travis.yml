@@ -1,0 +1,8 @@
+before_install:
+    - cd brocade
+
+language: clojure
+lein: lein2
+script: 
+    - lein cljsbuild once min
+    - lein run -m github.core brocade

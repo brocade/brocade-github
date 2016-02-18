@@ -4,21 +4,20 @@
   :license {:name "Eclipse Public License"
             :url  "http://www.eclipse.org/legal/epl-v10.html"}
 
-  :min-lein-version "2.5.3"
+  :min-lein-version "2.5.1"
 
 
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [org.clojure/clojurescript "1.7.170"]
                  [cljsjs/react "0.14.3-0"]
-                 [org.omcljs/om "1.0.0-alpha30"]
-                 [cljsjs/react-dom "0.14.3-1"]
-                 [cljsjs/react-dom-server "0.14.3-0"]
-                 [sablono "0.5.3"]
+                 [reagent "0.6.0-alpha"]
+                 [re-frame "0.7.0-alpha-2"]
                  [tentacles "0.5.1"]
                  [clj-time "0.8.0"]
                  [org.clojure/data.json "0.2.6"]
-                 [levand/immuconf "0.1.0"]
                  [hiccup "1.0.5"]
+                 [cljs-ajax "0.5.3"]
+                 [environ "1.0.2"]
                  [org.clojure/core.async "0.2.374"
                   :exclusions [org.clojure/tools.reader]]]
 
@@ -28,31 +27,24 @@
   :source-paths ["src/clj"]
   :main ^:skip-aot github.core
 
-  :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
+  :clean-targets ^{:protect false} ["resources/public/js/out" "target"]
 
-  :cljsbuild {:builds
-              [{:id           "dev"
+  :cljsbuild {:builds {
+               :dev {
                 :source-paths ["src/cljs"]
-
-                ;; If no code is to be run, set :figwheel true for continued automagical reloading
-                ;:figwheel {:on-jsload "brocade-github.core/on-js-reload"}
                 :figwheel     true
-
-                :compiler     {:main                 github.page
-                               :asset-path           "js/compiled/out"
-                               :output-to            "resources/public/js/compiled/brocade_github.js"
-                               :output-dir           "resources/public/js/compiled/out"
+                :compiler     {
+                               :main                 github.page
+                               :asset-path           "js/lib"
+                               :output-to            "resources/public/js/brocade_github.js"
                                :source-map-timestamp true}}
-               ;; This next build is an compressed minified build for
-               ;; production. You can build this with:
-               ;; lein cljsbuild once min
-               {:id           "min"
+               :prod {
                 :source-paths ["src/cljs"]
-                :compiler     {:output-to    "resources/public/js/compiled/brocade_github.js"
-                               :main         github.page
-                               ;:optimizations :advanced
-                               ;:optimizations :none
-                               :pretty-print false}}]}
+                :compiler     {:main                 github.page
+                               :asset-path           "js/lib"
+                               :output-to            "resources/public/js/brocade_github.js"
+                               :output-dir           "resources/public/js/lib"
+                               :prettyprint false}}}}
 
   :figwheel {;; :http-server-root "public" ;; default and assumes "resources"
              ;; :server-port 3449 ;; default

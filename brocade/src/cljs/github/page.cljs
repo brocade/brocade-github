@@ -1,133 +1,164 @@
 (ns github.page
-  (:require
-    [sablono.core :as sab :include-macros true]
-    [goog.dom :as gdom]
-    [om.dom :as dom]
-    [om.next :as om :refer-macros [defui]]
-    [github.state]
-    )
-  )
+(:require [reagent.core :as reagent]
+          [cljs.reader :refer [read-string]]
+          [re-frame.core :refer [register-handler
+                                   path
+                                   register-sub
+                                   dispatch
+                                   dispatch-sync
+                                   subscribe]]
+          [ajax.core :refer [GET] :as ajax]
+          [github.state]
+          [cljs.core.async :refer [put! chan <! >! close!]]
+          )
+ (:require-macros [reagent.ratom :refer [reaction]]
+ 									[cljs.core.async.macros :refer [go]]))
 
 (enable-console-print!)
-
-;; Initialize Application State
-
-(def app-state
-  (atom
-    github.state/page-state))
-
-(defmulti read (fn [env key params] key))
-
-(defmethod read :default
-           [{:keys [state] :as env} key params]
-           (let [st @state]
-                (if-let [[_ value] (find st key)]
-                        {:value value}
-                        {:value :not-found})))
-
-(defmethod read :app/footer
-           [{:keys [state] :as env} key {:keys [start end]}]
-           {:value (subvec (:app/footer @state) start end)})
-
-(defmethod read :git/repos
-           [{:keys [state] :as env} key {:keys [start end]}]
-           {:value (subvec (:git/repos @state) start end)})
-
 
 (declare git-cards)
 (declare footer-body)
 (declare footer-head)
 
+(def repo-uri "https://raw.githubusercontent.com/gaberger/brocade-github/develop/brocade/resources/public/app/app.edn")
+
+(register-handler
+  :get-repo             ;; <-- the button dispatched this id
+  (fn
+    [db _]
+    (GET
+      repo-uri
+      {:handler       #(dispatch [:process-response %1])   ;; further dispatch !!
+       :error-handler #(dispatch [:bad-response %1])})
+       db))
+
+
+(register-handler               ;; when the GET succeeds
+  :process-response             ;; the GET callback dispatched this event
+  (fn
+    [db [_ response]]           ;; extract the response from the dispatch event vector
+    (assoc db :app/repo (cljs.reader/read-string response ))
+  ))
+
+(register-handler
+  :bad-response
+  (fn
+    [db [_ response]]
+    (-> db
+        (assoc :app/repo github.state/fail-state))))
+
+
+(register-sub
+  :repo
+  (fn [db]
+  (reaction (:app/repo @db))))
+
+
 
 (defn header-template
-      [title]
-      (sab/html [:header.mdl-layout__header.mdl-layout__header--scroll.mdl-color--primary-dark
-                 [:div.brocade-logo.mdl-layout__header-row
-                  [:div.mdl-layout-spacer]
-                  [:span.mdl-layout-title title]]])
-      )
+      [title items]
+        [:nav.brocade-red {:role "navigation"}
+                  [:div.nav-wrapper.container
+                   [:a.brand-logo {:href "" :id "logo-container"} [:h1.brocade-logo] [:span.sub-title title]]
+                   [:ul.right.hide-on-med-and-down (map
+                     (fn [{:keys [title href]}]
+                         ^{:key title} [:li [:a {:href href} title]])
+                     items)]
+                   [:ul.side-nav {:id "nav-mobile"} (map
+                     (fn [{:keys [title href]}]
+                         ^{:key title} [:li [:a {:href href} title]])
+                     items)]
+                   [:a.button-collapse {:data-activates "nav-mobile"} [:i.material-icons "menu"]]
+                  ]
+                ])
+
 
 (defn main-template
       [repos]
-      (sab/html
-        [:main.mdl-layout__content
-         [:div.mdl-layout__tab-panel.is-active {:id "overview"}]
-         (git-cards repos)])
-      )
+        [:div.container
+         [:div.section
+           [:div.row
+             [:div.col.s12
+               (git-cards repos)
+             ]
+           ]
+         ]
+        ])
 
 
 (defn repo-template
-      [title desc main]
-      (sab/html
-        [:div.mdl-cell.mdl-cell--4-col
-         [:div.card-square.mdl-card.mdl-shadow--2dp
-          [:div.mdl-card__title.mdl-card--expand
-           [:h2.mdl-card__title-text title]]
+      [title desc main link]
+          ^{:key title} [:div.col.s12.m6
+            [:div.card.small
+             [:div.card-content
+              [:span.card-title title]
+              [:p desc]
+             ]
+             [:div.card-action
+               [:a {:href link} title]
+             ]
+            ]
+          ]
+        )
 
-          [:div.mdl-card__supporting-text
-           desc]
-          [:div.mdl-card__actions.mdl-card--border
-           [:a.mdl-button.mdl-button--colored.mdl-js-button.mdl-js-ripple-effect
-            main]]]]
-        ))
 
 
 (defn git-cards
       [repos]
-      (let [c (count repos)]
-           (sab/html [:section.section--center
-                      [:div.git-cards.mdl-grid
-                       (map #(repo-template (:title %) (:description %) (:maintainer %)) repos)
-                       ]]))
+            [:div.row
+                       (map #(repo-template
+                                 (get-in % [:repo :name])
+                                 (get-in % [:repo :description])
+                                 (get-in % [:repo :author])
+                                 (get-in % [:repo :html_url])
+                               ) repos)
+                       ]
       )
 
 (defn footer-template
       [coll]
-      (sab/html
-        [:footer.mdl-mega-footer
-         [:div.mdl-mega-footer__middle-section
-          (footer-head coll)
+        [:footer.page-footer.grey.darken-1
+         [:div.container
+          [:div.row
+           (footer-head coll)
           ]
          ]
-        )
-      )
+         [:div.footer-copyright
+          [:div.container]
+         ]
+        ]
+    )
 
 
 (defn footer-head
       [coll]
       (map (fn [{:keys [heading items checked?]}]
-               [:div.mdl-mega-footer__drop-down-section
-                [:input.mdl-mega-footer__heading-checkbox {:type "checkbox"}]
-                [:h1.mdl-mega-footer__heading heading]
+               ^{:key heading} [:div.col.l4.s12
+                  [:h5.white-text heading]
                 (footer-body items)])
            coll)
       )
 
 (defn footer-body
       [items]
-      (sab/html [:ul.mdl-mega-footer__link-list
+        [:ul
                  (map
                    (fn [{:keys [title href]}]
-                       [:li [:a {href href} title]])
-                   items)]))
+                      ^{:key title} [:li [:a.white-text {:href href} title]])
+                   items)])
 
-(defui Page
-       Object
-       (render [this]
-               (let [{:keys [app/title app/footer git/repos]} (om/props this)]
-                    (sab/html
-                      [:div.mdl-layout.mdl-js-layout.mdl-layout--fixed-header
-                       (header-template title)
-                       (main-template repos)
-                       (footer-template footer)]
-                      ))))
+(defn Page
+  []
+  (let [{:keys [app/title app/header app/footer]} github.state/page-state
+         repo (subscribe [:repo])]
+         [:div
+          (header-template title header)
+          (main-template @repo)
+          (footer-template footer)
+          ]))
 
-
-(def reconciler
-  (om/reconciler
-    {:state  app-state
-     :parser (om/parser {:read read})}))
-
-
-(om/add-root! reconciler Page (gdom/getElement "app"))
-
+(defn ^:export init
+  []
+  (dispatch [:get-repo])
+  (reagent/render [Page]
+                  (js/document.getElementById "app")))

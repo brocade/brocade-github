@@ -15,3 +15,4 @@ pom.xml
 .nrepl-port
 brocade-github.iml
 brocade/resources/config/config.edn
+brocade/resources/public/*

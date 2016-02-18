@@ -8,7 +8,9 @@
       [environ.core :refer [env]]
       [immuconf.config]))
 
-(def token (immuconf.config/get (immuconf.config/load "resources/config/config.edn") :git-token))
+; (def token (immuconf.config/get (immuconf.config/load "resources/config/config.edn") :git-token))
+
+
 
 (def sites [{:user "brocade" :repo "brocade"}
             {:user "BRCDcomm" :repo "BRCDcomm"}])
@@ -22,14 +24,15 @@
 
 (defn get-repos
       "Return collection of repos based on user/org"
-      [user]
-      (pmap #(select-keys % [:name :html_url :forks :description]) (repos/user-repos user {:oauth-token token}))
+      [user token]
+      (pmap #(select-keys % [:name :html_url :forks :description])
+            (repos/user-repos user {:oauth-token token}))
       )
 
 
 (defn get-lastcommits
       "Return a collection containing the sha, date, name and url of lastcommit for user and a collection of repos"
-      [user repo]
+      [user repo token]
       (let [lastcommit (first (repos/commits user repo {:oauth-token token}))
             sha (:sha lastcommit)
             date (get-in lastcommit [:commit :author :date])
@@ -42,14 +45,14 @@
 
 (defn get-repo-contributors
       "Return a list of repo contributors"
-      [user repo]
+      [user repo token]
       (map #(:login %) (repos/contributors user repo {:oauth-token token})
            ))
 
 
 (defn get-contributors-email
       "Take a list of users and return a map of user names and emails"
-      [users]
+      [users token]
       (reduce (fn [output user]
                   (let [record (users/user user {:oauth-token token})
                         email (:email record)
@@ -64,40 +67,52 @@
 
 (defn get-members
       "Return a list of collaborators"
-      [user repos]
-      (map #(repos/collaborators user (:name %) {:oauth-token token}) repos))
+      [user repos token]
+      (map #(repos/collaborators user (:name %) {:oauth-token token}) repos)
+  )
 
 
 (defn assemble-report
       [repo contribs commits]
-      (let [sites (assoc {} :repo repo)
-            contribs (assoc sites :contributors contribs)
-            report (assoc contribs :last-commit commits)]
-           report
+      (let [a  (assoc {} :commiters contribs)
+            b  (conj repo a commits)
+            r  (assoc {} :repo b)]
+           r
            )
-      )
+  )
+
+
 
 (defn report
-      "Return a collection of last-commits over a list of defined repositories"
-      [site]
-      (let [repos (get-repos site)]
-           (map (fn [repo]
+      "Return a collection of repo commits and contributors"
+      [site token]
+      (let [repos (get-repos site token)
+            report
+            (map (fn [repo]
                     (let [name (:name repo)
-                          contribs (get-repo-contributors site name)
-                          contrib-emails (get-contributors-email contribs)
-                          last-commits (get-lastcommits site name)
+                          c (get-repo-contributors site name token)
+                          contribs (get-contributors-email c token)
+                          commits (get-lastcommits site name token)
+
                           ]
-                         (assemble-report repo contrib-emails last-commits)
-                         )
+
+                      (assemble-report repo contribs commits))
                     )
                 repos
-                )
-           )
-      )
+                )]
+        ; (assoc {} :app/repo (into [] report))
+       (into [] report)
+
+      ))
+
 
 (defn -main [site]
-  (let [git-state (into [] (report site))]
-      (spit "resources/public/app/app.edn" git-state)
-      ))
+  (let [token (env :gittoken)]
+  (if (nil? token)
+      (do
+        (println "Please set env variable gittoken")
+        (System/exit 0)))
+      (spit "resources/public/app/app.edn" (report site token))))
+
 
 
