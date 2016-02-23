@@ -5,8 +5,7 @@
       [clj-time.format :as f]
       [clj-time.core :as t]
       [clojure.data.json :as json]
-      [environ.core :refer [env]]
-      [immuconf.config]))
+      [environ.core :refer [env]]))
 
 ; (def token (immuconf.config/get (immuconf.config/load "resources/config/config.edn") :git-token))
 

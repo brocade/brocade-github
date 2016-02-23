@@ -27,7 +27,7 @@
   :source-paths ["src/clj"]
   :main ^:skip-aot github.core
 
-  :clean-targets ^{:protect false} ["resources/public/js/out" "target"]
+  :clean-targets ^{:protect false} ["resources/public/js/lib" "target"]
 
   :cljsbuild {:builds {
                :dev {
