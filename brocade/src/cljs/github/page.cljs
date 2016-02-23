@@ -89,14 +89,11 @@
 (defn repo-template
       [title desc main link]
           ^{:key title} [:div.col.s12.m6
-            [:div.card.small
-             [:div.card-content
-              [:span.card-title title]
-              [:p desc]
-             ]
-             [:div.card-action
-               [:a {:href link} title]
-             ]
+            [:a.card.small.waves-effect.waves-block.waves-brocade {:href link}
+              [:div.card-content
+               [:span.card-title title]
+               [:p desc]
+              ]
             ]
           ]
         )
