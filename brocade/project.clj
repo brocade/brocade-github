@@ -1,4 +1,4 @@
-(defproject brocade-github "0.1.0-SNAPSHOT"
+  (defproject brocade-github "0.1.0-SNAPSHOT"
   :description "Brocade Github IO Site Generator"
   :url "http://brocade.github.io"
   :license {:name "Eclipse Public License"

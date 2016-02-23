@@ -86,6 +86,7 @@
         ])
 
 
+
 (defn repo-template
       [title desc main link]
           ^{:key title} [:div.col.s12.m6
@@ -94,13 +95,12 @@
               [:span.card-title title]
               [:p desc]
              ]
-             [:div.card-action
-               [:a {:href link} title]
-             ]
+             [:a {:href link}
+             [:div.card-action.waves-effect.waves-block.waves-brocade
+             title]]
             ]
           ]
         )
-
 
 
 (defn git-cards
