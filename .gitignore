@@ -3,6 +3,7 @@
 /brocade/resources/public/js/compiled/**
 figwheel_server.log
 pom.xml
+.lein-env
 *jar
 /lib/
 /classes/
@@ -16,3 +17,4 @@ pom.xml
 brocade-github.iml
 brocade/resources/config/config.edn
 brocade/resources/public/*
+.DS_Store
