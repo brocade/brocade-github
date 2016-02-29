@@ -20,23 +20,23 @@
 (declare footer-body)
 (declare footer-head)
 
-(def repo-uri "https://raw.githubusercontent.com/gaberger/brocade-github/develop/brocade/resources/public/app/app.edn")
+(def repo-uri "https://raw.githubusercontent.com/brocade/brocade.github.io/master/app/app.ed")
 
 (register-handler
-  :get-repo             ;; <-- the button dispatched this id
+  :get-repo
   (fn
     [db _]
     (GET
       repo-uri
-      {:handler       #(dispatch [:process-response %1])   ;; further dispatch !!
+      {:handler       #(dispatch [:process-response %1])
        :error-handler #(dispatch [:bad-response %1])})
        db))
 
 
-(register-handler               ;; when the GET succeeds
-  :process-response             ;; the GET callback dispatched this event
+(register-handler
+  :process-response
   (fn
-    [db [_ response]]           ;; extract the response from the dispatch event vector
+    [db [_ response]]
     (assoc db :app/repo (cljs.reader/read-string response ))
   ))
 
