@@ -20,7 +20,7 @@
 (declare footer-body)
 (declare footer-head)
 
-(def repo-uri "https://raw.githubusercontent.com/brocade/brocade.github.io/master/app/app.ed")
+(def repo-uri "https://raw.githubusercontent.com/brocade/brocade.github.io/master/app/app.edn")
 
 (register-handler
   :get-repo
