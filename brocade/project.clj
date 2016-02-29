@@ -6,7 +6,7 @@
 
   :min-lein-version "2.5.1"
 
-  :dependencies [[org.clojure/clojure "1.8.0"]
+  :dependencies [[org.clojure/clojure "1.7.0"]
                  [org.clojure/clojurescript "1.7.170"]
                  [cljsjs/react "0.14.3-0"]
                  [reagent "0.6.0-alpha"]
@@ -14,7 +14,6 @@
                  [tentacles "0.5.1"]
                  [clj-time "0.8.0"]
                  [org.clojure/data.json "0.2.6"]
-                 [hiccup "1.0.5"]
                  [cljs-ajax "0.5.3"]
                  [environ "1.0.2"]
                  [org.clojure/core.async "0.2.374"

@@ -71,7 +71,7 @@
     )
   )
 
-(def repo-filter (vec ["pybvc-archive-DO-NOT-USE", "brocade-github", "brocade-github.io"]))
+(def repo-filter (vec ["pybvc-archive-DO-NOT-USE", "brocade-github", "brocade.github.io"]))
 
 (defn re-remove
   [f-coll coll]
