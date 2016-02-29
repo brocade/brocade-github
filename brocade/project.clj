@@ -14,7 +14,6 @@
                  [tentacles "0.5.1"]
                  [clj-time "0.8.0"]
                  [org.clojure/data.json "0.2.6"]
-                 [hiccup "1.0.5"]
                  [cljs-ajax "0.5.3"]
                  [environ "1.0.2"]
                  [org.clojure/core.async "0.2.374"
